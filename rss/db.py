@@ -28,7 +28,7 @@ Subscription = NamedTuple("Subscription", feed_id=int, room_id=RoomID, user_id=U
                           notification_template=Template, send_notice=bool)
 Feed = NamedTuple("Feed", id=int, url=str, title=str, subtitle=str, link=str,
                   subscriptions=List[Subscription])
-Entry = NamedTuple("Entry", feed_id=int, id=str, date=datetime, title=str, summary=str, link=str)
+Entry = NamedTuple("Entry", feed_id=int, id=str, date=datetime, title=str, summary=str, content=str, link=str)
 
 
 class Database:
@@ -61,6 +61,7 @@ class Database:
                            Column("date", DateTime, nullable=False),
                            Column("title", Text, nullable=False),
                            Column("summary", Text, nullable=False),
+                           Column("content", Text, nullable=False),
                            Column("link", Text, nullable=False))
         self.version = Table("version", metadata,
                              Column("version", Integer, primary_key=True))
@@ -96,6 +97,7 @@ class Database:
                 date DATETIME NOT NULL,
                 title TEXT NOT NULL,
                 summary TEXT NOT NULL,
+                content TEXT NOT NULL,
                 link TEXT NOT NULL,
                 PRIMARY KEY (feed_id, id),
                 FOREIGN KEY(feed_id) REFERENCES feed (id)
@@ -197,7 +199,7 @@ class Database:
     def subscribe(self, feed_id: int, room_id: RoomID, user_id: UserID) -> None:
         self.db.execute(self.subscription.insert().values(
             feed_id=feed_id, room_id=room_id, user_id=user_id,
-            notification_template="New post in $feed_title: [$title]($link)"))
+            notification_template="New post in $feed_title: [$title]($link): </br> $content"))
 
     def unsubscribe(self, feed_id: int, room_id: RoomID) -> None:
         tbl = self.subscription
